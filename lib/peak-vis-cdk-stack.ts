@@ -1,13 +1,15 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
-import { Code, Function, FunctionUrlAuthType, Runtime, FunctionUrlCorsOptions } from 'aws-cdk-lib/aws-lambda';
+import { Code, Function, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { CfnOutput, Duration } from 'aws-cdk-lib';
+import { RestApi } from 'aws-cdk-lib/aws-apigateway';
 import * as path from "path";
 
 export class PeakVisCdkStack extends cdk.Stack {
   readonly bucket: Bucket;
   readonly uploadLambda: Function;
+  readonly apiGateway: RestApi;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -17,10 +19,12 @@ export class PeakVisCdkStack extends cdk.Stack {
     });
     this.uploadLambda = this.defineUploadLambda();
     this.configureBucketPolicies();
+
+    this.apiGateway = this.defineApiGateway();
   }
 
   private defineUploadLambda() {
-    const uploadFunction = new Function(this, "Omnicept-Data-Upload-Function", {
+    return new Function(this, "Omnicept-Data-Upload-Function", {
       runtime: Runtime.NODEJS_16_X,
       memorySize: 1024,
       functionName: "omnicept-data-upload-handler",
@@ -31,21 +35,29 @@ export class PeakVisCdkStack extends cdk.Stack {
         BUCKET_NAME: this.bucket.bucketName
       },
     });
-
-    const url = uploadFunction.addFunctionUrl({
-      authType: FunctionUrlAuthType.NONE,
-    });
-
-    new CfnOutput(this, "Upload-Lambda-Url", {
-      value: url.url,
-    });
-
-    return uploadFunction;
   }
 
   private configureBucketPolicies() {
     this.bucket.grantPut(this.uploadLambda);
     this.bucket.grantReadWrite(this.uploadLambda);
     //this.bucket.grantRead(this.getLambda);
+  }
+
+  private defineApiGateway() {
+    const apiGateway = new RestApi(this, "Omnicept-Data-Api", {
+      description: "Api Gateway for omnicept data lambdas",
+      defaultCorsPreflightOptions: {
+        allowHeaders: [
+          'X-AMZ-Date',
+          'Content-Type'
+        ],
+        allowMethods: ["GET", "POST"],
+        allowOrigins: ["*"]
+      }
+    });
+    new CfnOutput(this, "Gateway-Base-Url", {
+      value: apiGateway.url
+    });
+    return apiGateway;
   }
 }

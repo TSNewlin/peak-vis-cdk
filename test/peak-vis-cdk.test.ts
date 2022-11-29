@@ -1,5 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-import { Match, Template } from 'aws-cdk-lib/assertions';
+import { Template } from 'aws-cdk-lib/assertions';
 import * as PeakVisCdk from '../lib/peak-vis-cdk-stack';
 
 const app = new cdk.App();
@@ -18,4 +18,8 @@ test('Lambda Function for bucket uploads created', () => {
         Timeout: 60,
         Handler: "upload.main",
     });
+});
+
+test('Stack contains Api Gateway', () => {
+  template.hasResourceProperties("AWS::ApiGateway::RestApi", {});
 });
