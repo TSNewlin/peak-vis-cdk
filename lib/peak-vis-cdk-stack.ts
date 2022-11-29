@@ -3,7 +3,7 @@ import { Construct } from 'constructs';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { Code, Function, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { CfnOutput, Duration } from 'aws-cdk-lib';
-import { RestApi } from 'aws-cdk-lib/aws-apigateway';
+import { LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway';
 import * as path from "path";
 
 export class PeakVisCdkStack extends cdk.Stack {
@@ -19,8 +19,8 @@ export class PeakVisCdkStack extends cdk.Stack {
     });
     this.uploadLambda = this.defineUploadLambda();
     this.configureBucketPolicies();
-
     this.apiGateway = this.defineApiGateway();
+    this.configureApiMethods();
   }
 
   private defineUploadLambda() {
@@ -59,5 +59,10 @@ export class PeakVisCdkStack extends cdk.Stack {
       value: apiGateway.url
     });
     return apiGateway;
+  }
+
+  private configureApiMethods() {
+    const dataResource = this.apiGateway.root.addResource("{userId}");
+    dataResource.addMethod("POST", new LambdaIntegration(this.uploadLambda, {proxy: true}));
   }
 }

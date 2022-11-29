@@ -23,3 +23,13 @@ test('Lambda Function for bucket uploads created', () => {
 test('Stack contains Api Gateway', () => {
   template.hasResourceProperties("AWS::ApiGateway::RestApi", {});
 });
+
+test('ApiGateway has data resource', () => {
+  template.findResources('AWS::ApiGateway::Resource');
+});
+
+test('ApiGateway has Post method for data', () => {
+  template.hasResourceProperties("AWS::ApiGateway::Method", {
+    HttpMethod: "POST"
+  });
+});
