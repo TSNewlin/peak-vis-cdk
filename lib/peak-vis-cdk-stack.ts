@@ -1,13 +1,13 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { User, AccessKey } from 'aws-cdk-lib/aws-iam'
 import { Bucket } from 'aws-cdk-lib/aws-s3';
-import { Secret } from 'aws-cdk-lib/aws-secretsmanager';
+import { Code, Function, FunctionUrlAuthType, Runtime, FunctionUrlCorsOptions } from 'aws-cdk-lib/aws-lambda';
+import { CfnOutput, Duration } from 'aws-cdk-lib';
+import * as path from "path";
 
 export class PeakVisCdkStack extends cdk.Stack {
   readonly bucket: Bucket;
-  readonly iamUploadUser: User;
-  readonly iamGetUser: User;
+  readonly uploadLambda: Function;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -15,31 +15,37 @@ export class PeakVisCdkStack extends cdk.Stack {
     this.bucket = new Bucket(this, "Omnicept-Data-Bucket", {
       bucketName: "omnicept-data-bucket",
     });
-
-    this.iamUploadUser = new User(this, "Omnicept-Data-Bucket-Write-User", {userName: "OmniceptDataUploadUser"});
-    this.iamGetUser = new User(this, "Omnicept-Data-Bucket-Read-User", {userName: "OmniceptDataViewUser"});
-    this.provisionAccessKeys();
+    this.uploadLambda = this.defineUploadLambda();
     this.configureBucketPolicies();
   }
 
-  private provisionAccessKeys() {
-    const uploadUserAccessKey = new AccessKey(this, "Omnicept-Data-Bucket-Write-User-Key", {
-      user: this.iamUploadUser
+  private defineUploadLambda() {
+    const uploadFunction = new Function(this, "Omnicept-Data-Upload-Function", {
+      runtime: Runtime.NODEJS_16_X,
+      memorySize: 1024,
+      functionName: "omnicept-data-upload-handler",
+      timeout: Duration.seconds(60),
+      code: Code.fromAsset(path.join(__dirname, "/lambda/")),
+      handler: "upload.main",
+      environment: {
+        BUCKET_NAME: this.bucket.bucketName
+      },
     });
-    const getUserAccessKey = new AccessKey(this, "Omnicept-Data-Bucket-Read-User-Key", {
-      user: this.iamGetUser
+
+    const url = uploadFunction.addFunctionUrl({
+      authType: FunctionUrlAuthType.NONE,
     });
-    new Secret(this, "Omnicept-Data-Bucket-Read-User-Secret", {
-      secretStringValue: getUserAccessKey.secretAccessKey
+
+    new CfnOutput(this, "Upload-Lambda-Url", {
+      value: url.url,
     });
-    new Secret(this, "Omnicept-Data-Bucket-Write-User-Secret", {
-      secretStringValue: uploadUserAccessKey.secretAccessKey,
-    });
+
+    return uploadFunction;
   }
 
   private configureBucketPolicies() {
-    this.bucket.grantPut(this.iamUploadUser);
-    this.bucket.grantWrite(this.iamUploadUser);
-    this.bucket.grantRead(this.iamGetUser);
+    this.bucket.grantPut(this.uploadLambda);
+    this.bucket.grantReadWrite(this.uploadLambda);
+    //this.bucket.grantRead(this.getLambda);
   }
 }

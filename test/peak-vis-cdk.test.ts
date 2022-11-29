@@ -1,5 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-import { Template } from 'aws-cdk-lib/assertions';
+import { Match, Template } from 'aws-cdk-lib/assertions';
 import * as PeakVisCdk from '../lib/peak-vis-cdk-stack';
 
 const app = new cdk.App();
@@ -12,14 +12,10 @@ test('S3 bucket created', () => {
   });
 }); 
 
-test('IAM user for bucket uploads created', () => {
-    template.hasResourceProperties('AWS::IAM::User', {
-        UserName: "OmniceptDataUploadUser"
+test('Lambda Function for bucket uploads created', () => {
+    template.hasResourceProperties('AWS::Lambda::Function', {
+        FunctionName: "omnicept-data-upload-handler",
+        Timeout: 60,
+        Handler: "upload.main",
     });
-});
-
-test('IAM user for reading s3 data created', () => {
-    template.hasResourceProperties('AWS::IAM::User', {
-        UserName: "OmniceptDataViewUser"
-    })
 });
