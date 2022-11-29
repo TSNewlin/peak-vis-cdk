@@ -3,13 +3,14 @@ import { Construct } from 'constructs';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { Code, Function, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { CfnOutput, Duration } from 'aws-cdk-lib';
-import { LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway';
+import { JsonSchemaType, LambdaIntegration, Model, RequestValidator, RestApi } from 'aws-cdk-lib/aws-apigateway';
 import * as path from "path";
 
 export class PeakVisCdkStack extends cdk.Stack {
   readonly bucket: Bucket;
   readonly uploadLambda: Function;
   readonly apiGateway: RestApi;
+  readonly uploadRequestValidator: RequestValidator;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -63,6 +64,34 @@ export class PeakVisCdkStack extends cdk.Stack {
 
   private configureApiMethods() {
     const dataResource = this.apiGateway.root.addResource("{userId}");
-    dataResource.addMethod("POST", new LambdaIntegration(this.uploadLambda, {proxy: true}));
+    dataResource.addMethod("POST", new LambdaIntegration(this.uploadLambda, {proxy: true}), {
+      requestValidator: this.defineUploadRequestValidator(),
+      requestModels: {"application/json": this.defineUploadRequestModel()},
+    });
+  }
+
+  private defineUploadRequestValidator() {
+    return new RequestValidator(this, 'Api-Gateway-Upload-Request-Validator', {
+      restApi: this.apiGateway,
+      validateRequestBody: true,
+      requestValidatorName: "upload-request-validator",
+    });
+  }
+
+  private defineUploadRequestModel() {
+    return new Model(this, 'Api-Gateway-Upload-Request-Model', {
+      restApi: this.apiGateway,
+      contentType: "application/json",
+      modelName: "DataUploadModel",
+      schema: {
+        type: JsonSchemaType.OBJECT,
+        properties: {
+          heartRateValues: {type: JsonSchemaType.ARRAY},
+          eyeTrackingValues: {type: JsonSchemaType.ARRAY},
+          cognitiveLoadValues: {type: JsonSchemaType.ARRAY},
+          heartRateVariabilityValues: {type: JsonSchemaType.ARRAY}
+        }
+      }
+    });
   }
 }

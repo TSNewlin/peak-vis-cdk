@@ -33,3 +33,17 @@ test('ApiGateway has Post method for data', () => {
     HttpMethod: "POST"
   });
 });
+
+test('ApiGateway has upload request validator', () => {
+  template.hasResourceProperties("AWS::ApiGateway::RequestValidator", {
+    ValidateRequestBody: true,
+    Name: "upload-request-validator"
+  });
+});
+
+test('ApiGateway has upload request body validation model', () => {
+  template.hasResourceProperties("AWS::ApiGateway::Model", {
+    ContentType: "application/json",
+    Name: "DataUploadModel",
+  })
+});
