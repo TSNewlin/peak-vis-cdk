@@ -33,7 +33,8 @@ export class PeakVisCdkStack extends cdk.Stack {
       code: Code.fromAsset(path.join(__dirname, "/lambda/")),
       handler: "upload.main",
       environment: {
-        BUCKET_NAME: this.bucket.bucketName
+        BUCKET_NAME: this.bucket.bucketName,
+        BUCKET_REGION: this.region,
       },
     });
   }
