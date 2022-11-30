@@ -79,6 +79,8 @@ export class PeakVisCdkStack extends cdk.Stack {
       requestValidator: this.defineUploadRequestValidator(),
       requestModels: {"application/json": this.defineUploadRequestModel()},
     });
+
+    dataResource.addMethod("GET", new LambdaIntegration(this.listLambda, {proxy: true}));
   }
 
   private defineUploadRequestValidator() {

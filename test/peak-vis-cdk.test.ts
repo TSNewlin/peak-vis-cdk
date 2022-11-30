@@ -36,7 +36,7 @@ test('ApiGateway has data resource', () => {
   template.findResources('AWS::ApiGateway::Resource');
 });
 
-test('ApiGateway has Post method for data', () => {
+test('ApiGateway has POST method for data', () => {
   template.hasResourceProperties("AWS::ApiGateway::Method", {
     HttpMethod: "POST"
   });
@@ -54,4 +54,10 @@ test('ApiGateway has upload request body validation model', () => {
     ContentType: "application/json",
     Name: "DataUploadModel",
   })
+});
+
+test("ApiGateway has GET method to list objects in a folder", () => {
+  template.hasResourceProperties("AWS::ApiGateway::Method", {
+    HttpMethod: "GET"
+  });
 });
