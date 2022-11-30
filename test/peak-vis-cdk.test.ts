@@ -13,11 +13,19 @@ test('S3 bucket created', () => {
 }); 
 
 test('Lambda Function for bucket uploads created', () => {
-    template.hasResourceProperties('AWS::Lambda::Function', {
-        FunctionName: "omnicept-data-upload-handler",
-        Timeout: 60,
-        Handler: "upload.main",
-    });
+  template.hasResourceProperties('AWS::Lambda::Function', {
+      FunctionName: "omnicept-data-upload-handler",
+      Timeout: 60,
+      Handler: "upload.main",
+  });
+});
+
+test('Lambda Function for listing uploads in folder cerated', () => {
+  template.hasResourceProperties('AWS::Lambda::Function', {
+    FunctionName: "omnicept-data-folder-list-handler",
+    Timeout: 60,
+    Handler: "list.main"
+  });
 });
 
 test('Stack contains Api Gateway', () => {

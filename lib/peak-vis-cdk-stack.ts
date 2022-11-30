@@ -9,6 +9,7 @@ import * as path from "path";
 export class PeakVisCdkStack extends cdk.Stack {
   readonly bucket: Bucket;
   readonly uploadLambda: Function;
+  readonly listLambda: Function;
   readonly apiGateway: RestApi;
   readonly uploadRequestValidator: RequestValidator;
 
@@ -18,31 +19,40 @@ export class PeakVisCdkStack extends cdk.Stack {
     this.bucket = new Bucket(this, "Omnicept-Data-Bucket", {
       bucketName: "omnicept-data-bucket",
     });
-    this.uploadLambda = this.defineUploadLambda();
+    this.uploadLambda = this.defineLambda({
+      id: "Omnicept-Data-Upload-Function", 
+      functionName: "omnicept-data-upload-handler", 
+      handler: "upload.main"
+    });
+    this.listLambda = this.defineLambda({
+      id: "Omnicept-Folder-List-Objects-Function",
+      functionName: "omnicept-data-folder-list-handler",
+      handler: "list.main"
+    });
     this.configureBucketPolicies();
     this.apiGateway = this.defineApiGateway();
     this.configureApiMethods();
   }
 
-  private defineUploadLambda() {
-    return new Function(this, "Omnicept-Data-Upload-Function", {
+  private defineLambda(lambdaProps: {id: string, functionName: string, handler: string}) {
+    return new Function(this, lambdaProps.id, {
       runtime: Runtime.NODEJS_16_X,
       memorySize: 1024,
-      functionName: "omnicept-data-upload-handler",
       timeout: Duration.seconds(60),
       code: Code.fromAsset(path.join(__dirname, "/lambda/")),
-      handler: "upload.main",
       environment: {
         BUCKET_NAME: this.bucket.bucketName,
         BUCKET_REGION: this.region,
       },
+      functionName: lambdaProps.functionName,
+      handler: lambdaProps.handler,
     });
   }
 
   private configureBucketPolicies() {
     this.bucket.grantPut(this.uploadLambda);
     this.bucket.grantReadWrite(this.uploadLambda);
-    //this.bucket.grantRead(this.getLambda);
+    this.bucket.grantRead(this.listLambda);
   }
 
   private defineApiGateway() {
