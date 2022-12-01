@@ -10,7 +10,7 @@ export class PeakVisCdkStack extends cdk.Stack {
   readonly bucket: Bucket;
   readonly uploadLambda: Function;
   readonly listLambda: Function;
-  readonly getLambda: Function;
+  readonly getSingleFileLambda: Function;
   readonly apiGateway: RestApi;
   readonly uploadRequestValidator: RequestValidator;
 
@@ -30,7 +30,7 @@ export class PeakVisCdkStack extends cdk.Stack {
       functionName: "omnicept-data-folder-list-handler",
       handler: "list.main"
     });
-    this.getLambda = this.defineLambda({
+    this.getSingleFileLambda = this.defineLambda({
       id: "Omnicept-Get-Single-FIle-Lambda",
       functionName: "omnicept-data-get-file-handler",
       handler: "get.main"
@@ -59,6 +59,7 @@ export class PeakVisCdkStack extends cdk.Stack {
     this.bucket.grantPut(this.uploadLambda);
     this.bucket.grantReadWrite(this.uploadLambda);
     this.bucket.grantRead(this.listLambda);
+    this.bucket.grantRead(this.getSingleFileLambda);
   }
 
   private defineApiGateway() {
@@ -80,13 +81,16 @@ export class PeakVisCdkStack extends cdk.Stack {
   }
 
   private configureApiMethods() {
-    const dataResource = this.apiGateway.root.addResource("{userId}");
-    dataResource.addMethod("POST", new LambdaIntegration(this.uploadLambda, {proxy: true}), {
+    const rootResource = this.apiGateway.root.addResource("{userId}");
+    rootResource.addMethod("POST", new LambdaIntegration(this.uploadLambda, {proxy: true}), {
       requestValidator: this.defineUploadRequestValidator(),
       requestModels: {"application/json": this.defineUploadRequestModel()},
     });
 
-    dataResource.addMethod("GET", new LambdaIntegration(this.listLambda, {proxy: true}));
+    rootResource.addMethod("GET", new LambdaIntegration(this.listLambda, {proxy: true}));
+
+    const singleFileResource = rootResource.addResource("{fileName}");
+    singleFileResource.addMethod("GET", new LambdaIntegration(this.getSingleFileLambda, {proxy: true}));
   }
 
   private defineUploadRequestValidator() {
