@@ -10,6 +10,7 @@ export class PeakVisCdkStack extends cdk.Stack {
   readonly bucket: Bucket;
   readonly uploadLambda: Function;
   readonly listLambda: Function;
+  readonly getLambda: Function;
   readonly apiGateway: RestApi;
   readonly uploadRequestValidator: RequestValidator;
 
@@ -28,6 +29,11 @@ export class PeakVisCdkStack extends cdk.Stack {
       id: "Omnicept-Folder-List-Objects-Function",
       functionName: "omnicept-data-folder-list-handler",
       handler: "list.main"
+    });
+    this.getLambda = this.defineLambda({
+      id: "Omnicept-Get-Single-FIle-Lambda",
+      functionName: "omnicept-data-get-file-handler",
+      handler: "get.main"
     });
     this.configureBucketPolicies();
     this.apiGateway = this.defineApiGateway();

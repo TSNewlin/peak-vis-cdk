@@ -20,11 +20,19 @@ test('Lambda Function for bucket uploads created', () => {
   });
 });
 
-test('Lambda Function for listing uploads in folder cerated', () => {
+test('Lambda Function for listing uploads in folder created', () => {
   template.hasResourceProperties('AWS::Lambda::Function', {
     FunctionName: "omnicept-data-folder-list-handler",
     Timeout: 60,
     Handler: "list.main"
+  });
+});
+
+test('Lambda Function for getting single file created', () => {
+  template.hasResourceProperties('AWS::Lambda::Function', {
+    FunctionName: "omnicept-data-get-file-handler",
+    Timeout: 60,
+    Handler: "get.main"
   });
 });
 
