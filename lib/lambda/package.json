@@ -8,6 +8,8 @@
   "author": "Tyler Newlin",
   "license": "ISC",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.218.0"
+    "@aws-sdk/client-s3": "^3.218.0",
+    "@aws-sdk/s3-request-presigner": "^3.218.0",
+    "axios": "^1.2.0"
   }
 }
