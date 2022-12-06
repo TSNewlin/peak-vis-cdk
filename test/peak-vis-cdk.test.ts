@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Template } from 'aws-cdk-lib/assertions';
 import * as PeakVisCdk from '../lib/peak-vis-cdk-stack';
+import {CfnElement} from "aws-cdk-lib";
 
 const app = new cdk.App();
 const stack = new PeakVisCdk.PeakVisCdkStack(app, 'TestStack');
@@ -68,4 +69,19 @@ test("ApiGateway has GET method to list objects in a folder", () => {
   template.hasResourceProperties("AWS::ApiGateway::Method", {
     HttpMethod: "GET"
   });
+});
+
+test('ApiGateway has sub resource for single file requests', () => {
+  const logicalId = stack.getLogicalId(stack.apiGateway.node.findChild('Resource') as CfnElement);
+  template.hasResourceProperties("AWS::ApiGateway::Resource", {
+    ParentId: {
+      "Fn::GetAtt": [
+          logicalId,
+          'RootResourceId'
+      ],
+    },
+    RestApiId: {
+      Ref: logicalId
+    }
+  })
 });
