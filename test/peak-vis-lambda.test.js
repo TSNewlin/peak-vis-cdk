@@ -1,4 +1,4 @@
-const list = require("../lib/lambda/list");
+const paramValidator = require("../lib/lambda/validateparam");
 
 const invalidUserIdResponse = {
     body: JSON.stringify({
@@ -7,20 +7,18 @@ const invalidUserIdResponse = {
     statusCode: 400
 }
 
-test("Function to list uploaded datasets rejects userId not of length 6", async () => {
-    const event = {
-        pathParameters: {
-            userId: "1234"
-        }
-    };
-    expect(await list.main(event)).toEqual(invalidUserIdResponse)
+test("ParamValidator rejects userId that is too short", () => {
+    expect(paramValidator.validate("1234")).toEqual(invalidUserIdResponse);
 });
 
-test("Function to list uploaded datasets rejects userId that contains non-digit characters", async () => {
-    const event = {
-        pathParameters: {
-            userId: "12as56"
-        }
-    }
-    expect(await list.main(event)).toEqual(invalidUserIdResponse)
+test("ParamValidator rejects userId that contains non-digit characters", () => {
+    expect(paramValidator.validate("12as56")).toEqual(invalidUserIdResponse);
+});
+
+test("ParamValidator reject userId that is too long", () => {
+    expect(paramValidator.validate("123456789")).toEqual(invalidUserIdResponse);
+});
+
+test("ParamValidator accepts valid useId", () => {
+    expect(paramValidator.validate("123456")).toEqual({valid: true});
 });
